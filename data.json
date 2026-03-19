@@ -1,0 +1,31 @@
+[
+  {
+    "id": 1,
+    "nombre": "Ejemplo",
+    "habitacion": "A1",
+    "iglesia": "Central",
+    "distrito": "Norte"
+  },
+  {
+    "id": 2,
+    "nombre": "Juan",
+    "habitacion": "A1",
+    "iglesia": "Central",
+    "distrito": "Norte"
+  },
+  {
+    "id": 3,
+    "nombre": "Pedro",
+    "habitacion": "B2",
+    "iglesia": "Sur",
+    "distrito": "Este"
+  },
+
+  {
+    "id": 1,
+    "nombre": "Ejemplo",
+    "habitacion": "A1",
+    "iglesia": "Central",
+    "distrito": "Norte"
+  }
+]

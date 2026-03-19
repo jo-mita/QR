@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Sistema QR PRO</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: white;
+    }
+
+    .top-bar {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input {
+      padding: 10px;
+      width: 250px;
+      border-radius: 8px;
+      border: none;
+      margin-right: 10px;
+    }
+
+    button {
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #00c6ff;
+      color: white;
+      font-weight: bold;
+      margin: 5px;
+    }
+
+    button:hover {
+      background: #0072ff;
+    }
+
+    #lista {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .card:hover {
+      transform: scale(1.03);
+    }
+
+    .card h3 {
+      margin: 5px 0;
+      color: #2a5298;
+    }
+
+    .info {
+      font-size: 14px;
+      margin: 3px 0;
+    }
+
+    .qr {
+      margin-top: 10px;
+    }
+  </style>
+
+</head>
+<body>
+
+<h1>Sistema QR PRO</h1>
+
+<div class="top-bar">
+  <input id="buscador" placeholder="Buscar por nombre..." onkeyup="filtrar()">
+  <br>
+  <button onclick="descargarTodos()">Descargar ZIP</button>
+  <button onclick="generarPDF()">Descargar PDF</button>
+</div>
+
+<div id="lista"></div>
+
+<script>
+let data = [];
+let qrMap = {};
+
+fetch('data.json')
+  .then(res => res.json())
+  .then(json => {
+    data = json;
+    mostrar(data);
+  });
+
+function filtrar(){
+  const texto = document.getElementById('buscador').value.toLowerCase();
+  const filtrados = data.filter(p => p.nombre.toLowerCase().includes(texto));
+  mostrar(filtrados);
+}
+
+function mostrar(lista){
+  const cont = document.getElementById('lista');
+  cont.innerHTML = '';
+  qrMap = {};
+
+  lista.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'card';
+
+    const qrId = `qr-${p.id}`;
+
+    div.innerHTML = `
+      <h3>${p.nombre}</h3>
+      <div class="info">Habitación: ${p.habitacion}</div>
+      <div class="info">Iglesia: ${p.iglesia}</div>
+      <div class="info">Distrito: ${p.distrito}</div>
+      <div class="info">Info Extra 1: ${p.extra1 || ''}</div>
+      <div class="info">Info Extra 2: ${p.extra2 || ''}</div>
+      <div class="info">Info Extra 3: ${p.extra3 || ''}</div>
+      <div class="info">Info Extra 4: ${p.extra4 || ''}</div>
+      <div id="${qrId}" class="qr"></div>
+    `;
+
+    cont.appendChild(div);
+
+    new QRCode(document.getElementById(qrId), {
+      text: window.location.origin + '/persona.html?id=' + p.id,
+      width: 120,
+      height: 120
+    });
+
+    setTimeout(() => {
+      const canvas = document.querySelector(`#${qrId} canvas`);
+      qrMap[`${p.id}_${p.nombre}`] = canvas;
+    }, 200);
+  });
+}
+
+async function descargarTodos(){
+  const zip = new JSZip();
+
+  for (const nombre in qrMap){
+    const canvas = qrMap[nombre];
+    const base64 = canvas.toDataURL("image/png").split(',')[1];
+    zip.file(nombre + ".png", base64, {base64: true});
+  }
+
+  const contenido = await zip.generateAsync({type:"blob"});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(contenido);
+  link.download = "QR_Personas.zip";
+  link.click();
+}
+
+async function generarPDF(){
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  let x = 10;
+  let y = 10;
+
+  for (const nombre in qrMap){
+    const canvas = qrMap[nombre];
+    const img = canvas.toDataURL("image/png");
+
+    pdf.text(nombre, x, y);
+    pdf.addImage(img, 'PNG', x, y+5, 40, 40);
+
+    x += 60;
+    if(x > 150){
+      x = 10;
+      y += 60;
+    }
+
+    if(y > 250){
+      pdf.addPage();
+      x = 10;
+      y = 10;
+    }
+  }
+
+  pdf.save("Carnets_QR.pdf");
+}
+</script>
+
+</body>
+</html>

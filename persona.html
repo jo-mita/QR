@@ -1,0 +1,39 @@
+<!-- ==========================
+persona.html
+========================== -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Persona</title>
+</head>
+<body>
+
+<h1>Datos de la Persona</h1>
+<div id="info"></div>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const id = params.get('id');
+
+fetch('data.json')
+  .then(res => res.json())
+  .then(data => {
+    const p = data.find(x => x.id == id);
+
+    if(p){
+      document.getElementById('info').innerHTML = `
+        <h2>${p.nombre}</h2>
+        <p>Habitación: ${p.habitacion}</p>
+        <p>Iglesia: ${p.iglesia}</p>
+        <p>Distrito: ${p.distrito}</p>
+      `;
+    } else {
+      document.getElementById('info').innerHTML = 'No encontrado';
+    }
+  });
+</script>
+
+</body>
+</html>
