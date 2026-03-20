@@ -1,39 +1,87 @@
-<!-- ==========================
-persona.html
-========================== -->
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Persona</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha de Información</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f0f2f5;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh; /* Centra verticalmente en cualquier dispositivo */
+    }
+    .profile-card {
+      background: white;
+      width: 85%;
+      max-width: 400px;
+      padding: 30px;
+      border-radius: 25px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+      text-align: center;
+      border-top: 8px solid #1e3c72;
+    }
+    .profile-card h2 { color: #1e3c72; margin-bottom: 25px; font-size: 24px; }
+    .data-box { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 12px; }
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid #eee;
+      padding: 12px 0;
+    }
+    .data-row:last-child { border-bottom: none; }
+    .label { font-weight: bold; color: #555; text-transform: uppercase; font-size: 12px; }
+    .value { color: #222; font-weight: 500; }
+    .error { color: #d9534f; font-weight: bold; padding: 20px; }
+    #loader { color: #1e3c72; font-style: italic; }
+  </style>
 </head>
 <body>
 
-<h1>Datos de la Persona</h1>
-<div id="info"></div>
+<div class="profile-card" id="main-content">
+  <div id="loader">Buscando información segura...</div>
+</div>
 
 <script>
-const params = new URLSearchParams(window.location.search);
-const id = params.get('id');
+  const params = new URLSearchParams(window.location.search);
+  const userKey = params.get('key'); // Lee la llave secreta del QR
 
-fetch('data.json')
-  .then(res => res.json())
-  .then(data => {
-    const p = data.find(x => x.id == id);
+  fetch('data.json')
+    .then(res => res.json())
+    .then(data => {
+      const p = data.find(x => x.key === userKey);
 
-    if(p){
-      document.getElementById('info').innerHTML = `
-        <h2>${p.nombre}</h2>
-        <p>Habitación: ${p.habitacion}</p>
-        <p>Iglesia: ${p.iglesia}</p>
-        <p>Distrito: ${p.distrito}</p>
-      `;
-    } else {
-      document.getElementById('info').innerHTML = 'No encontrado';
-    }
-  });
+      const container = document.getElementById('main-content');
+
+      if(p) {
+        container.innerHTML = `
+          <h2>Datos Registrados</h2>
+          <div class="data-box">
+            <div class="data-row"><span class="label">Nombre</span> <span class="value">${p.nombre}</span></div>
+            <div class="data-row"><span class="label">Habitación</span> <span class="value">${p.habitacion}</span></div>
+            <div class="data-row"><span class="label">Iglesia</span> <span class="value">${p.iglesia}</span></div>
+            <div class="data-row"><span class="label">Distrito</span> <span class="value">${p.distrito}</span></div>
+          </div>
+          <p style="font-size: 10px; color: #aaa; margin-top: 20px;">Verificado mediante Sistema QR PRO</p>
+        `;
+      } else {
+        container.innerHTML = `
+          <div class="error">
+            <div style="font-size: 50px;">⚠️</div>
+            ACCESO NO AUTORIZADO<br>
+            <p style="font-weight: normal; font-size: 14px; color: #666;">
+              Este código QR no existe en nuestra base de datos o ha sido desactivado.
+            </p>
+          </div>
+        `;
+      }
+    })
+    .catch(err => {
+      document.getElementById('main-content').innerHTML = "Error al conectar con el servidor.";
+    });
 </script>
-
 </body>
 </html>
