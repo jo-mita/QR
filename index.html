@@ -1,25 +1,108 @@
-<style>
-  /* Estilo para el nuevo filtro */
-  .filtros-container {
-    background: rgba(255,255,255,0.1);
-    padding: 15px;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    display: flex;
-    justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap;
-  }
-  select {
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    background: white;
-    font-weight: bold;
-    color: #1e3c72;
-    cursor: pointer;
-  }
-</style>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema QR PRO - Admin</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    /* Recuperando tu estilo original con mejoras */
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      margin: 0;
+      padding: 20px;
+      color: #333;
+      display: none; /* Se activa con la clave */
+      min-height: 100vh;
+    }
+
+    h1 { text-align: center; color: white; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+
+    .top-bar {
+      background: rgba(255, 255, 255, 0.15);
+      padding: 20px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      margin-bottom: 20px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .filtros-container {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    input, select {
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+    }
+
+    input { width: 250px; }
+    select { background: white; color: #1e3c72; font-weight: bold; cursor: pointer; }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #00c6ff;
+      color: white;
+      font-weight: bold;
+      transition: 0.3s;
+      margin: 5px;
+    }
+
+    button:hover { background: #0072ff; transform: translateY(-2px); }
+    button:disabled { background: #666; opacity: 0.5; cursor: not-allowed; }
+
+    /* Estilo de la Paginación */
+    .paginacion {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin: 20px 0;
+      color: white;
+    }
+
+    #lista {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 20px;
+      max-width: 1300px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+      text-align: center;
+      transition: 0.3s;
+    }
+
+    .card:hover { transform: scale(1.02); }
+    .card h3 { color: #1e3c72; margin: 0 0 10px 0; font-size: 18px; }
+    .info { font-size: 13px; color: #666; margin: 3px 0; }
+    .qr { margin-top: 15px; display: flex; justify-content: center; background: #f9f9f9; padding: 10px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>Panel de Administración QR</h1>
 
 <div class="top-bar">
   <div class="filtros-container">
@@ -41,7 +124,7 @@
     </select>
   </div>
 
-  <button onclick="descargarTodos()">Descargar ZIP (Filtrados)</button>
+  <button onclick="descargarZIP()">Descargar ZIP (Filtrados)</button>
   <button onclick="generarPDF()">Descargar PDF (Filtrados)</button>
 </div>
 
@@ -54,13 +137,24 @@
 <div id="lista"></div>
 
 <script>
-// VARIABLES GLOBALES
+// --- CONFIGURACIÓN ---
+const CLAVE_ADMIN = "1234"; // TU CLAVE AQUÍ
 let dataCompleta = [];
 let dataFiltrada = [];
 let paginaActual = 1;
 const registrosPorPagina = 50;
+let qrMap = {}; // Para descargas
 
-// Al cargar los datos
+// --- SEGURIDAD ---
+const intento = prompt("Ingrese clave de acceso:");
+if(intento === CLAVE_ADMIN) {
+  document.body.style.display = "block";
+  window.onload = cargarDatos;
+} else {
+  alert("Clave incorrecta");
+  window.location.href = "about:blank";
+}
+
 function cargarDatos() {
   fetch('data.json')
     .then(res => res.json())
@@ -68,10 +162,10 @@ function cargarDatos() {
       dataCompleta = json;
       dataFiltrada = json;
       actualizarVista();
-    });
+    })
+    .catch(err => console.error("Error al cargar JSON:", err));
 }
 
-// FUNCIÓN DE FILTRADO COMBINADO (Nombre + Zona)
 function ejecutarFiltros() {
   const nombreBusqueda = document.getElementById('buscador').value.toLowerCase();
   const zonaSeleccionada = document.getElementById('filtroZona').value;
@@ -82,29 +176,92 @@ function ejecutarFiltros() {
     return coincideNombre && coincideZona;
   });
 
-  paginaActual = 1; // Reiniciar a la primera página tras filtrar
+  paginaActual = 1;
   actualizarVista();
+}
+
+function cambiarPagina(dir) {
+  paginaActual += dir;
+  actualizarVista();
+  window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
 function actualizarVista() {
   const cont = document.getElementById('lista');
   cont.innerHTML = '';
-  
+  qrMap = {}; // Reiniciamos mapa para que solo descargue lo filtrado
+
   const totalPaginas = Math.ceil(dataFiltrada.length / registrosPorPagina) || 1;
   const inicio = (paginaActual - 1) * registrosPorPagina;
-  const itemsAMostrar = dataFiltrada.slice(inicio, inicio + registrosPorPagina);
+  const items = dataFiltrada.slice(inicio, inicio + registrosPorPagina);
 
   document.getElementById('infoPagina').innerText = `Página ${paginaActual} de ${totalPaginas} (${dataFiltrada.length} personas)`;
-  
-  // Lógica de botones y generación de QR...
-  itemsAMostrar.forEach((p, i) => {
-    // ... (Aquí va tu código de crear las cards y el QRCode que ya tenemos)
+  document.getElementById('btnPrev').disabled = (paginaActual === 1);
+  document.getElementById('btnNext').disabled = (paginaActual === totalPaginas);
+
+  items.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'card';
+    const qrId = `qr-${p.id}`;
+
+    div.innerHTML = `
+      <h3>${p.nombre}</h3>
+      <div class="info"><b>Zona:</b> ${p.zona || 'N/A'}</div>
+      <div class="info"><b>Hab:</b> ${p.habitacion}</div>
+      <div id="${qrId}" class="qr"></div>
+    `;
+    cont.appendChild(div);
+
+    // Generar QR
+    setTimeout(() => {
+      const container = document.getElementById(qrId);
+      new QRCode(container, {
+        text: window.location.origin + '/persona.html?key=' + (p.key || p.id),
+        width: 130,
+        height: 130
+      });
+      
+      // Guardar en mapa para descargas
+      setTimeout(() => {
+        const canvas = container.querySelector('canvas');
+        if(canvas) qrMap[`${p.id}_${p.nombre}`] = canvas;
+      }, 300);
+    }, i * 30);
   });
 }
 
-// DESCARGAS: Ahora solo descargarán lo que esté filtrado en pantalla
-async function descargarTodos() {
-  alert(`Iniciando descarga de ${dataFiltrada.length} códigos QR...`);
-  // El código de JSZip usará ahora dataFiltrada en lugar de dataCompleta
+// --- FUNCIONES DE DESCARGA ---
+async function descargarZIP() {
+  if(Object.keys(qrMap).length === 0) return alert("Espera a que carguen los QR");
+  const zip = new JSZip();
+  for (const nombre in qrMap){
+    const base64 = qrMap[nombre].toDataURL("image/png").split(',')[1];
+    zip.file(nombre + ".png", base64, {base64: true});
+  }
+  const content = await zip.generateAsync({type:"blob"});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(content);
+  link.download = "QR_Filtrados.zip";
+  link.click();
+}
+
+async function generarPDF() {
+  if(Object.keys(qrMap).length === 0) return alert("Espera a que carguen los QR");
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+  let x = 10, y = 10;
+
+  for (const nombre in qrMap) {
+    const img = qrMap[nombre].toDataURL("image/png");
+    pdf.setFontSize(8);
+    pdf.text(nombre, x, y);
+    pdf.addImage(img, 'PNG', x, y+2, 35, 35);
+    x += 50;
+    if(x > 160) { x = 10; y += 50; }
+    if(y > 250) { pdf.addPage(); x = 10; y = 10; }
+  }
+  pdf.save("QR_Filtrados.pdf");
 }
 </script>
+</body>
+</html>
