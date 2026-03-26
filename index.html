@@ -204,10 +204,9 @@ function actualizarVista() {
     div.className = 'card';
     const qrId = `qr-${p.id}`;
 
+ /* Modificacion de texto que aparece */
     div.innerHTML = `
       <h3>${p.nombre}</h3>
-      <div class="info"><b>Zona:</b> ${p.zona || 'N/A'}</div>
-      <div class="info"><b>Hab:</b> ${p.habitacion}</div>
       <div id="${qrId}" class="qr"></div>
     `;
     cont.appendChild(div);
