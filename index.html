@@ -207,6 +207,9 @@ function actualizarVista() {
  /* Modificacion de texto que aparece */
     div.innerHTML = `
       <h3>${p.nombre}</h3>
+      <div class="info"><b>Zona:</b> ${p.zona || 'N/A'}</div>
+      <div class="info"><b>Hab:</b> ${p.habitacion}</div>
+      <div class="info"><b>supl:</b>${p.Suplente}</div>
       <div id="${qrId}" class="qr"></div>
     `;
     cont.appendChild(div);
