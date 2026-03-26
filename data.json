@@ -22,5 +22,13 @@
     "habitacion": "B2",
     "iglesia": "Sur",
     "distrito": "Este"
-  }
+  },
+ {
+  "id": 1,
+  "key": "usr-a1b2",
+  "nombre": "Juan Pérez",
+  "zona": "Zona 1",
+  "habitacion": "101",
+  "iglesia": "Central"
+}
 ]
