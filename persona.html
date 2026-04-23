@@ -1,87 +1,296 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ficha de Información</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f0f2f5;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh; /* Centra verticalmente en cualquier dispositivo */
-    }
-    .profile-card {
-      background: white;
-      width: 85%;
-      max-width: 400px;
-      padding: 30px;
-      border-radius: 25px;
-      box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-      text-align: center;
-      border-top: 8px solid #1e3c72;
-    }
-    .profile-card h2 { color: #1e3c72; margin-bottom: 25px; font-size: 24px; }
-    .data-box { text-align: left; background: #f9f9f9; padding: 15px; border-radius: 12px; }
-    .data-row {
-      display: flex;
-      justify-content: space-between;
-      border-bottom: 1px solid #eee;
-      padding: 12px 0;
-    }
-    .data-row:last-child { border-bottom: none; }
-    .label { font-weight: bold; color: #555; text-transform: uppercase; font-size: 12px; }
-    .value { color: #222; font-weight: 500; }
-    .error { color: #d9534f; font-weight: bold; padding: 20px; }
-    #loader { color: #1e3c72; font-style: italic; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Información  Personal - QR PRO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .profile-card {
+            background: white;
+            width: 90%;
+            max-width: 450px;
+            padding: 35px;
+            border-radius: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            border-top: 8px solid #1e3c72;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .profile-card.bloqueado {
+            border-top-color: #f44336;
+        }
+
+        .profile-card.error {
+            border-top-color: #ff9800;
+        }
+
+        .header-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+        }
+
+        .profile-card h2 {
+            color: #1e3c72;
+            margin-bottom: 25px;
+            font-size: 1.6rem;
+            font-weight: 600;
+        }
+
+        .zona-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .data-box {
+            text-align: left;
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e0e0e0;
+            padding: 15px 0;
+        }
+
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .value {
+            color: #1e3c72;
+            font-weight: 600;
+            font-size: 15px;
+            text-align: right;
+            max-width: 60%;
+            word-break: break-word;
+        }
+
+        .error-box {
+            color: #d9534f;
+            font-weight: bold;
+            padding: 20px;
+        }
+
+        .error-description {
+            font-weight: normal;
+            font-size: 14px;
+            color: #666;
+            margin-top: 15px;
+            line-height: 1.6;
+        }
+
+        .bloqueado-box {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .bloqueado-box h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .bloqueado-box p {
+            font-size: 14px;
+            opacity: 0.95;
+            line-height: 1.6;
+        }
+
+        .footer-text {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .loader {
+            color: #1e3c72;
+            font-style: italic;
+            font-size: 1.1rem;
+        }
+
+        .loader::after {
+            content: '';
+            animation: dots 1.5s infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+
+        @media (max-width: 480px) {
+            .profile-card {
+                padding: 25px 20px;
+            }
+
+            .profile-card h2 {
+                font-size: 1.3rem;
+            }
+
+            .header-icon {
+                font-size: 3rem;
+            }
+
+            .value {
+                font-size: 13px;
+                max-width: 55%;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="profile-card" id="main-content">
+        <div class="header-icon">🔍</div>
+        <div class="loader">Verificando información</div>
+    </div>
 
-<div class="profile-card" id="main-content">
-  <div id="loader">Buscando información segura...</div>
-</div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const userKey = params.get('key');
 
-<script>
-  const params = new URLSearchParams(window.location.search);
-  const userKey = params.get('key'); // Lee la llave secreta del QR
+        if(!userKey) {
+            mostrarError('Sin clave', 'No se proporcionó ningún código QR válido.');
+        } else {
+            fetch('data.json')
+                .then(res => res.json())
+                .then(data => {
+                    const persona = data.find(x => x.key === userKey);
+                    const container = document.getElementById('main-content');
 
-  fetch('data.json')
-    .then(res => res.json())
-    .then(data => {
-      const p = data.find(x => x.key === userKey);
+                    if(persona) {
+                        // Verificar si está bloqueado
+                        if(persona.bloqueado) {
+                            container.className = 'profile-card bloqueado';
+                            container.innerHTML = `
+                                <div class="header-icon">🔒</div>
+                                <div class="bloqueado-box">
+                                    <h3>Acceso Temporalmente Restringido</h3>
+                                    <p>Este código QR ha sido bloqueado temporalmente por el administrador del evento.</p>
+                                </div>
+                                <div class="error-description">
+                                    <strong>¿Por qué está bloqueado?</strong><br>
+                                    El acceso a la información puede estar restringido hasta que el evento comience o por razones de seguridad.<br><br>
+                                    <strong>¿Qué hacer?</strong><br>
+                                    Por favor, contacta con el organizador del evento si necesitas acceso urgente a tu información.
+                                </div>
+                                <p class="footer-text">Sistema QR PRO • Verificación Segura</p>
+                            `;
+                        } else {
+                            // Mostrar información normal
+                            container.className = 'profile-card';
+                            container.innerHTML = `
+                                <div class="header-icon">✅</div>
+                                <h2>Información Verificada</h2>
+                                <span class="zona-badge">${persona.zona || 'Sin zona'}</span>
+                                <div class="data-box">
+                                    <div class="data-row">
+                                        <span class="label">Nombre Completo</span>
+                                        <span class="value">${persona.nombre}</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="label">Habitación</span>
+                                        <span class="value">${persona.habitacion}</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="label">Iglesia</span>
+                                        <span class="value">${persona.iglesia}</span>
+                                    </div>
+                                    <div class="data-row">
+                                        <span class="label">Distrito</span>
+                                        <span class="value">${persona.distrito}</span>
+                                    </div>
+                                    ${persona.sexo ? `
+                                        <div class="data-row">
+                                            <span class="label">Sexo</span>
+                                            <span class="value">${persona.sexo === 'M' ? 'Masculino' : 'Femenino'}</span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <p class="footer-text">
+                                    Código verificado mediante Sistema QR PRO<br>
+                                    Información actualizada y segura
+                                </p>
+                            `;
+                        }
+                    } else {
+                        mostrarError('Código No Encontrado', 'Este código QR no existe en nuestra base de datos o ha sido eliminado.');
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    mostrarError('Error de Conexión', 'No se pudo conectar con el servidor. Por favor, verifica tu conexión a internet e intenta nuevamente.');
+                });
+        }
 
-      const container = document.getElementById('main-content');
-
-      if(p) {
-        container.innerHTML = `
-          <h2>Datos Registrados</h2>
-          <div class="data-box">
-            <div class="data-row"><span class="label">Nombre</span> <span class="value">${p.nombre}</span></div>
-            <div class="data-row"><span class="label">Habitación</span> <span class="value">${p.habitacion}</span></div>
-            <div class="data-row"><span class="label">Iglesia</span> <span class="value">${p.iglesia}</span></div>
-            <div class="data-row"><span class="label">Distrito</span> <span class="value">${p.distrito}</span></div>
-          </div>
-          <p style="font-size: 10px; color: #aaa; margin-top: 20px;">Verificado mediante Sistema QR PRO</p>
-        `;
-      } else {
-        container.innerHTML = `
-          <div class="error">
-            <div style="font-size: 50px;">⚠️</div>
-            ACCESO NO AUTORIZADO<br>
-            <p style="font-weight: normal; font-size: 14px; color: #666;">
-              Este código QR no existe en nuestra base de datos o ha sido desactivado.
-            </p>
-          </div>
-        `;
-      }
-    })
-    .catch(err => {
-      document.getElementById('main-content').innerHTML = "Error al conectar con el servidor.";
-    });
-</script>
+        function mostrarError(titulo, descripcion) {
+            const container = document.getElementById('main-content');
+            container.className = 'profile-card error';
+            container.innerHTML = `
+                <div class="header-icon">⚠️</div>
+                <div class="error-box">
+                    ${titulo}
+                </div>
+                <div class="error-description">
+                    ${descripcion}
+                </div>
+                <p class="footer-text">Sistema QR PRO</p>
+            `;
+        }
+    </script>
 </body>
 </html>
