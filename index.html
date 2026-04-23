@@ -1,269 +1,640 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema QR PRO - Admin</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema QR PRO Admin</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            padding: 20px;
+            color: #333;
+            display: none;
+            min-height: 100vh;
+        }
 
-  <style>
-    /* Recuperando tu estilo original con mejoras */
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      margin: 0;
-      padding: 20px;
-      color: #333;
-      display: none; /* Se activa con la clave */
-      min-height: 100vh;
-    }
+        body.loaded {
+            display: block;
+        }
 
-    h1 { text-align: center; color: white; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 25px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-size: 2rem;
+        }
 
-    .top-bar {
-      background: rgba(255, 255, 255, 0.15);
-      padding: 20px;
-      border-radius: 15px;
-      backdrop-filter: blur(10px);
-      margin-bottom: 20px;
-      text-align: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
+        .top-bar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
 
-    .filtros-container {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 15px;
-      flex-wrap: wrap;
-    }
+        .filtros-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
 
-    input, select {
-      padding: 12px;
-      border-radius: 8px;
-      border: none;
-      outline: none;
-      font-size: 14px;
-    }
+        input, select {
+            padding: 12px 16px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            outline: none;
+            font-size: 14px;
+            transition: 0.3s;
+        }
 
-    input { width: 250px; }
-    select { background: white; color: #1e3c72; font-weight: bold; cursor: pointer; }
+        input:focus, select:focus {
+            border-color: #1e3c72;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+        }
 
-    button {
-      padding: 12px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      background: #00c6ff;
-      color: white;
-      font-weight: bold;
-      transition: 0.3s;
-      margin: 5px;
-    }
+        input {
+            width: 280px;
+        }
 
-    button:hover { background: #0072ff; transform: translateY(-2px); }
-    button:disabled { background: #666; opacity: 0.5; cursor: not-allowed; }
+        select {
+            background: white;
+            color: #1e3c72;
+            font-weight: 600;
+            cursor: pointer;
+        }
 
-    /* Estilo de la Paginación */
-    .paginacion {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 20px;
-      margin: 20px 0;
-      color: white;
-    }
+        .botones-accion {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #e0e0e0;
+        }
 
-    #lista {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 20px;
-      max-width: 1300px;
-      margin: auto;
-    }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-    .card {
-      background: white;
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-      text-align: center;
-      transition: 0.3s;
-    }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
 
-    .card:hover { transform: scale(1.02); }
-    .card h3 { color: #1e3c72; margin: 0 0 10px 0; font-size: 18px; }
-    .info { font-size: 13px; color: #666; margin: 3px 0; }
-    .qr { margin-top: 15px; display: flex; justify-content: center; background: #f9f9f9; padding: 10px; border-radius: 10px; }
-  </style>
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #999 !important;
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #00c6ff, #0072ff);
+        }
+
+        .btn-lock-all {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+        }
+
+        .btn-unlock-all {
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+        }
+
+        .estadisticas {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .stat-box .numero {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-box .label {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-box.bloqueados {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+        }
+
+        .stat-box.activos {
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+        }
+
+        .paginacion {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin: 20px 0;
+            color: white;
+            font-weight: 600;
+        }
+
+        .paginacion button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            min-width: 120px;
+        }
+
+        #lista {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            text-align: center;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #1e3c72, #2a5298);
+        }
+
+        .card.bloqueado::before {
+            background: linear-gradient(90deg, #f44336, #d32f2f);
+        }
+
+        .card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+
+        .card h3 {
+            color: #1e3c72;
+            margin: 0 0 12px 0;
+            font-size: 1.1rem;
+            line-height: 1.3;
+        }
+
+        .info {
+            font-size: 13px;
+            color: #666;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        .info b {
+            color: #1e3c72;
+        }
+
+        .zona-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .qr-container {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .lock-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(244, 67, 54, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 3rem;
+            z-index: 2;
+        }
+
+        .card.bloqueado .lock-overlay {
+            display: flex;
+        }
+
+        .btn-lock {
+            width: 100%;
+            margin-top: 12px;
+            font-size: 13px;
+            padding: 10px;
+        }
+
+        .btn-lock.bloqueado {
+            background: linear-gradient(135deg, #4caf50, #388e3c);
+        }
+
+        .btn-lock.desbloqueado {
+            background: linear-gradient(135deg, #f44336, #d32f2f);
+        }
+
+        .estado-general {
+            text-align: center;
+            color: white;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            #lista {
+                grid-template-columns: 1fr;
+            }
+
+            .filtros-container {
+                flex-direction: column;
+            }
+
+            input, select {
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2rem;
+            padding: 50px;
+        }
+    </style>
 </head>
 <body>
+    <h1>🔐 Panel de Administración QR</h1>
 
-<h1>Panel de Administración QR</h1>
+    <div class="top-bar">
+        <div class="estadisticas">
+            <div class="stat-box">
+                <span class="numero" id="totalPersonas">0</span>
+                <span class="label">Total</span>
+            </div>
+            <div class="stat-box activos">
+                <span class="numero" id="totalActivos">0</span>
+                <span class="label">Activos</span>
+            </div>
+            <div class="stat-box bloqueados">
+                <span class="numero" id="totalBloqueados">0</span>
+                <span class="label">Bloqueados</span>
+            </div>
+        </div>
 
-<div class="top-bar">
-  <div class="filtros-container">
-    <input id="buscador" placeholder="Buscar por nombre..." onkeyup="ejecutarFiltros()">
-    
-    <select id="filtroZona" onchange="ejecutarFiltros()">
-      <option value="todas">Todas las Zonas</option>
-      <option value="Zona 1">Zona 1</option>
-      <option value="Zona 2">Zona 2</option>
-      <option value="Zona 3">Zona 3</option>
-      <option value="Zona 4">Zona 4</option>
-      <option value="Zona 5">Zona 5</option>
-      <option value="Zona 6">Zona 6</option>
-      <option value="Zona 7">Zona 7</option>
-      <option value="Zona 8">Zona 8</option>
-      <option value="Zona 9">Zona 9</option>
-      <option value="Zona 10">Zona 10</option>
-      <option value="Zona 11">Zona 11</option>
-    </select>
-  </div>
+        <div class="filtros-container">
+            <input id="buscador" placeholder="🔍 Buscar por nombre..." onkeyup="ejecutarFiltros()">
+            <select id="filtroZona" onchange="ejecutarFiltros()">
+                <option value="todas">📍 Todas las Zonas</option>
+            </select>
+        </div>
 
-  <button onclick="descargarZIP()">Descargar ZIP (Filtrados)</button>
-  <button onclick="generarPDF()">Descargar PDF (Filtrados)</button>
-</div>
+        <div class="botones-accion">
+            <button class="btn-lock-all" onclick="bloquearTodosFiltrados()">
+                🔒 Bloquear Filtrados
+            </button>
+            <button class="btn-unlock-all" onclick="desbloquearTodosFiltrados()">
+                🔓 Desbloquear Filtrados
+            </button>
+            <button class="btn-download" onclick="descargarZIP()">
+                📦 Descargar ZIP
+            </button>
+            <button class="btn-download" onclick="generarPDF()">
+                📄 Descargar PDF
+            </button>
+        </div>
 
-<div class="paginacion">
-  <button id="btnPrev" onclick="cambiarPagina(-1)">« Anterior</button>
-  <span id="infoPagina">Página 1 de 1</span>
-  <button id="btnNext" onclick="cambiarPagina(1)">Siguiente »</button>
-</div>
+        <div class="estado-general" id="estadoGeneral"></div>
+    </div>
 
-<div id="lista"></div>
+    <div class="paginacion">
+        <button id="btnPrev" onclick="cambiarPagina(-1)">« Anterior</button>
+        <span id="infoPagina">Página 1 de 1</span>
+        <button id="btnNext" onclick="cambiarPagina(1)">Siguiente »</button>
+    </div>
 
-<script>
-// --- CONFIGURACIÓN ---
-const CLAVE_ADMIN = "012345678910"; // TU CLAVE AQUÍ
-let dataCompleta = [];
-let dataFiltrada = [];
-let paginaActual = 1;
-const registrosPorPagina = 50;
-let qrMap = {}; // Para descargas
+    <div id="lista"></div>
 
-// --- SEGURIDAD ---
-const intento = prompt("Ingrese clave de acceso:");
-if(intento === CLAVE_ADMIN) {
-  document.body.style.display = "block";
-  window.onload = cargarDatos;
-} else {
-  alert("Clave incorrecta");
-  window.location.href = "about:blank";
-}
+    <script>
+        // --- CONFIGURACIÓN ---
+        const CLAVE_ADMIN = "1234";
+        let dataCompleta = [];
+        let dataFiltrada = [];
+        let paginaActual = 1;
+        const registrosPorPagina = 50;
+        let qrMap = {};
 
-function cargarDatos() {
-  fetch('data.json')
-    .then(res => res.json())
-    .then(json => {
-      dataCompleta = json;
-      dataFiltrada = json;
-      actualizarVista();
-    })
-    .catch(err => console.error("Error al cargar JSON:", err));
-}
+        // --- SEGURIDAD ---
+        const intento = prompt("🔐 Ingrese clave de acceso:");
+        if(intento === CLAVE_ADMIN) {
+            document.body.classList.add('loaded');
+            window.onload = cargarDatos;
+        } else {
+            alert("❌ Clave incorrecta");
+            window.location.href = "about:blank";
+        }
 
-function ejecutarFiltros() {
-  const nombreBusqueda = document.getElementById('buscador').value.toLowerCase();
-  const zonaSeleccionada = document.getElementById('filtroZona').value;
+        // --- SISTEMA DE BLOQUEO ---
+        function obtenerEstadoBloqueo() {
+            const estado = localStorage.getItem('estadoBloqueo');
+            return estado ? JSON.parse(estado) : {};
+        }
 
-  dataFiltrada = dataCompleta.filter(p => {
-    const coincideNombre = p.nombre.toLowerCase().includes(nombreBusqueda);
-    const coincideZona = (zonaSeleccionada === "todas" || p.zona === zonaSeleccionada);
-    return coincideNombre && coincideZona;
-  });
+        function guardarEstadoBloqueo(estado) {
+            localStorage.setItem('estadoBloqueo', JSON.stringify(estado));
+        }
 
-  paginaActual = 1;
-  actualizarVista();
-}
+        function toggleBloqueo(id) {
+            const persona = dataCompleta.find(p => p.id === id);
+            if(!persona) return;
 
-function cambiarPagina(dir) {
-  paginaActual += dir;
-  actualizarVista();
-  window.scrollTo({top: 0, behavior: 'smooth'});
-}
+            persona.bloqueado = !persona.bloqueado;
+            
+            // Guardar en localStorage
+            const estado = obtenerEstadoBloqueo();
+            estado[id] = persona.bloqueado;
+            guardarEstadoBloqueo(estado);
 
-function actualizarVista() {
-  const cont = document.getElementById('lista');
-  cont.innerHTML = '';
-  qrMap = {}; // Reiniciamos mapa para que solo descargue lo filtrado
+            // Actualizar vista
+            actualizarVista();
+        }
 
-  const totalPaginas = Math.ceil(dataFiltrada.length / registrosPorPagina) || 1;
-  const inicio = (paginaActual - 1) * registrosPorPagina;
-  const items = dataFiltrada.slice(inicio, inicio + registrosPorPagina);
+        function bloquearTodosFiltrados() {
+            if(!confirm(`¿Bloquear ${dataFiltrada.length} QR filtrados?`)) return;
 
-  document.getElementById('infoPagina').innerText = `Página ${paginaActual} de ${totalPaginas} (${dataFiltrada.length} personas)`;
-  document.getElementById('btnPrev').disabled = (paginaActual === 1);
-  document.getElementById('btnNext').disabled = (paginaActual === totalPaginas);
+            const estado = obtenerEstadoBloqueo();
+            dataFiltrada.forEach(p => {
+                p.bloqueado = true;
+                estado[p.id] = true;
+            });
+            guardarEstadoBloqueo(estado);
+            actualizarVista();
+            alert(`✅ ${dataFiltrada.length} QR bloqueados`);
+        }
 
-  items.forEach((p, i) => {
-    const div = document.createElement('div');
-    div.className = 'card';
-    const qrId = `qr-${p.id}`;
+        function desbloquearTodosFiltrados() {
+            if(!confirm(`¿Desbloquear ${dataFiltrada.length} QR filtrados?`)) return;
 
- /* Modificacion de texto que aparece */
-    div.innerHTML = `
-      <h3>${p.nombre}</h3>
-      <div class="info"><b>Zona:</b> ${p.zona || 'N/A'}</div>
-      <div class="info"><b>Hab:</b> ${p.habitacion}</div>
-      <div class="info"><b>supl:</b>${p.Suplente}</div>
-      <div id="${qrId}" class="qr"></div>
-    `;
-    cont.appendChild(div);
+            const estado = obtenerEstadoBloqueo();
+            dataFiltrada.forEach(p => {
+                p.bloqueado = false;
+                estado[p.id] = false;
+            });
+            guardarEstadoBloqueo(estado);
+            actualizarVista();
+            alert(`✅ ${dataFiltrada.length} QR desbloqueados`);
+        }
 
-    // Generar QR
-    setTimeout(() => {
-      const container = document.getElementById(qrId);
-      new QRCode(container, {
-        text: window.location.origin + '/persona.html?key=' + (p.key || p.id),
-        width: 130,
-        height: 130
-      });
-      
-      // Guardar en mapa para descargas
-      setTimeout(() => {
-        const canvas = container.querySelector('canvas');
-        if(canvas) qrMap[`${p.id}_${p.nombre}`] = canvas;
-      }, 300);
-    }, i * 30);
-  });
-}
+        // --- CARGA DE DATOS ---
+        function cargarDatos() {
+            fetch('data.json')
+                .then(res => res.json())
+                .then(json => {
+                    dataCompleta = json;
+                    
+                    // Aplicar estado de bloqueo guardado
+                    const estado = obtenerEstadoBloqueo();
+                    dataCompleta.forEach(p => {
+                        p.bloqueado = estado[p.id] || false;
+                    });
 
-// --- FUNCIONES DE DESCARGA ---
-async function descargarZIP() {
-  if(Object.keys(qrMap).length === 0) return alert("Espera a que carguen los QR");
-  const zip = new JSZip();
-  for (const nombre in qrMap){
-    const base64 = qrMap[nombre].toDataURL("image/png").split(',')[1];
-    zip.file(nombre + ".png", base64, {base64: true});
-  }
-  const content = await zip.generateAsync({type:"blob"});
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(content);
-  link.download = "QR_Filtrados.zip";
-  link.click();
-}
+                    // Cargar zonas en el filtro
+                    const zonas = [...new Set(dataCompleta.map(p => p.zona))].sort();
+                    const select = document.getElementById('filtroZona');
+                    zonas.forEach(zona => {
+                        const option = document.createElement('option');
+                        option.value = zona;
+                        option.textContent = zona;
+                        select.appendChild(option);
+                    });
 
-async function generarPDF() {
-  if(Object.keys(qrMap).length === 0) return alert("Espera a que carguen los QR");
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-  let x = 10, y = 10;
+                    dataFiltrada = dataCompleta;
+                    actualizarVista();
+                })
+                .catch(err => {
+                    console.error("Error al cargar JSON:", err);
+                    alert("❌ Error al cargar los datos");
+                });
+        }
 
-  for (const nombre in qrMap) {
-    const img = qrMap[nombre].toDataURL("image/png");
-    pdf.setFontSize(8);
-    pdf.text(nombre, x, y);
-    pdf.addImage(img, 'PNG', x, y+2, 35, 35);
-    x += 50;
-    if(x > 160) { x = 10; y += 50; }
-    if(y > 250) { pdf.addPage(); x = 10; y = 10; }
-  }
-  pdf.save("QR_Filtrados.pdf");
-}
-</script>
+        // --- FILTROS ---
+        function ejecutarFiltros() {
+            const nombreBusqueda = document.getElementById('buscador').value.toLowerCase();
+            const zonaSeleccionada = document.getElementById('filtroZona').value;
+
+            dataFiltrada = dataCompleta.filter(p => {
+                const coincideNombre = p.nombre.toLowerCase().includes(nombreBusqueda);
+                const coincideZona = (zonaSeleccionada === "todas" || p.zona === zonaSeleccionada);
+                return coincideNombre && coincideZona;
+            });
+
+            paginaActual = 1;
+            actualizarVista();
+        }
+
+        // --- PAGINACIÓN ---
+        function cambiarPagina(dir) {
+            paginaActual += dir;
+            actualizarVista();
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        // --- ACTUALIZAR VISTA ---
+        function actualizarVista() {
+            const cont = document.getElementById('lista');
+            cont.innerHTML = '';
+            qrMap = {};
+
+            // Estadísticas
+            const totalBloqueados = dataCompleta.filter(p => p.bloqueado).length;
+            const totalActivos = dataCompleta.length - totalBloqueados;
+            
+            document.getElementById('totalPersonas').textContent = dataCompleta.length;
+            document.getElementById('totalActivos').textContent = totalActivos;
+            document.getElementById('totalBloqueados').textContent = totalBloqueados;
+
+            // Paginación
+            const totalPaginas = Math.ceil(dataFiltrada.length / registrosPorPagina) || 1;
+            const inicio = (paginaActual - 1) * registrosPorPagina;
+            const items = dataFiltrada.slice(inicio, inicio + registrosPorPagina);
+
+            const bloqueadosFiltrados = dataFiltrada.filter(p => p.bloqueado).length;
+            document.getElementById('estadoGeneral').innerHTML = 
+                `Mostrando ${items.length} de ${dataFiltrada.length} registros | 
+                ${bloqueadosFiltrados} bloqueados en esta vista`;
+
+            document.getElementById('infoPagina').innerText = 
+                `Página ${paginaActual} de ${totalPaginas}`;
+            document.getElementById('btnPrev').disabled = (paginaActual === 1);
+            document.getElementById('btnNext').disabled = (paginaActual === totalPaginas);
+
+            // Generar cards
+            items.forEach((p, i) => {
+                const div = document.createElement('div');
+                div.className = `card ${p.bloqueado ? 'bloqueado' : ''}`;
+                const qrId = `qr-${p.id}`;
+                
+                div.innerHTML = `
+                    <span class="zona-badge">${p.zona}</span>
+                    <h3>${p.nombre}</h3>
+                    <div class="info">
+                        <span><b>Habitación:</b></span>
+                        <span>${p.habitacion}</span>
+                    </div>
+                    <div class="info">
+                        <span><b>Iglesia:</b></span>
+                        <span>${p.iglesia}</span>
+                    </div>
+                    <div class="info">
+                        <span><b>Distrito:</b></span>
+                        <span>${p.distrito}</span>
+                    </div>
+                    <div class="qr-container">
+                        <div class="lock-overlay">🔒</div>
+                        <div id="${qrId}"></div>
+                    </div>
+                    <button class="btn-lock ${p.bloqueado ? 'bloqueado' : 'desbloqueado'}" 
+                            onclick="toggleBloqueo(${p.id})">
+                        ${p.bloqueado ? '🔓 Desbloquear' : '🔒 Bloquear'}
+                    </button>
+                `;
+                cont.appendChild(div);
+
+                // Generar QR
+                setTimeout(() => {
+                    const container = document.getElementById(qrId);
+                    if(container) {
+                        new QRCode(container, {
+                            text: window.location.origin + '/persona.html?key=' + p.key,
+                            width: 130,
+                            height: 130
+                        });
+
+                        setTimeout(() => {
+                            const canvas = container.querySelector('canvas');
+                            if(canvas) qrMap[`${p.id}_${p.nombre}`] = canvas;
+                        }, 300);
+                    }
+                }, i * 30);
+            });
+        }
+
+        // --- DESCARGAS ---
+        async function descargarZIP() {
+            if(Object.keys(qrMap).length === 0) {
+                return alert("⏳ Espera a que carguen los QR");
+            }
+
+            const zip = new JSZip();
+            for (const nombre in qrMap){
+                const base64 = qrMap[nombre].toDataURL("image/png").split(',')[1];
+                zip.file(nombre + ".png", base64, {base64: true});
+            }
+
+            const content = await zip.generateAsync({type:"blob"});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = "QR_Filtrados.zip";
+            link.click();
+        }
+
+        async function generarPDF() {
+            if(Object.keys(qrMap).length === 0) {
+                return alert("⏳ Espera a que carguen los QR");
+            }
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            let x = 10, y = 10;
+
+            for (const nombre in qrMap) {
+                const img = qrMap[nombre].toDataURL("image/png");
+                pdf.setFontSize(7);
+                pdf.text(nombre, x, y);
+                pdf.addImage(img, 'PNG', x, y+2, 35, 35);
+                
+                x += 50;
+                if(x > 160) {
+                    x = 10;
+                    y += 50;
+                }
+                if(y > 250) {
+                    pdf.addPage();
+                    x = 10;
+                    y = 10;
+                }
+            }
+
+            pdf.save("QR_Filtrados.pdf");
+        }
+    </script>
 </body>
 </html>
